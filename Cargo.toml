@@ -10,7 +10,7 @@ readme = "README.md"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["euclid", "serde", "smallvec", "hashbrown", "hibitset"]
+default = ["euclid", "serde", "smallvec", "hashbrown", "hibitset", "shred"]
 
 
 [dependencies]
