@@ -52,8 +52,6 @@ extern crate serde_bytes;
 extern crate smallbitvec;
 #[cfg(feature = "smallvec")]
 extern crate smallvec;
-#[cfg(feature = "specs")]
-extern crate specs;
 #[cfg(feature = "string_cache")]
 extern crate string_cache;
 #[cfg(feature = "time")]
@@ -67,8 +65,9 @@ extern crate hibitset;
 #[cfg(feature = "shred")]
 extern crate shred;
 
-#[cfg(feature = "serde_bytes")]
-use self::serde_bytes::ByteBuf;
+
+
+use std::collections::BTreeMap;
 use std::hash::{BuildHasher, Hash};
 use std::mem::{align_of, size_of, MaybeUninit};
 use std::ops::Range;
@@ -86,11 +85,13 @@ use winapi::ctypes::c_void;
 #[cfg(target_os = "windows")]
 use winapi::um::heapapi::{GetProcessHeap, HeapSize, HeapValidate};
 
+
+#[cfg(feature = "serde_bytes")]
+use self::serde_bytes::ByteBuf;
+
+
 #[cfg(feature = "void")]
 use self::void::Void;
-
-
-use std::collections::BTreeMap;
 
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap;
@@ -840,7 +841,7 @@ impl MallocSizeOf for BitSet
 }
 
 #[cfg(feature = "shred")]
-impl<T: MallocSizeOf> MallocSizeOf for shred::Fetch<T>
+impl<'a, T: MallocSizeOf> MallocSizeOf for shred::Fetch<'a, T>
 {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.deref().size_of(ops)
@@ -848,7 +849,7 @@ impl<T: MallocSizeOf> MallocSizeOf for shred::Fetch<T>
 }
 
 #[cfg(feature = "shred")]
-impl<T: MallocSizeOf> MallocSizeOf for shred::FetchMut<T>
+impl<'a, T: MallocSizeOf> MallocSizeOf for shred::FetchMut<'a, T>
 {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.deref().size_of(ops)
