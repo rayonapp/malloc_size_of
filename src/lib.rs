@@ -64,6 +64,8 @@ extern crate url;
 extern crate void;
 #[cfg(feature = "hibitset")]
 extern crate hibitset;
+#[cfg(feature = "shred")]
+extern crate shred;
 
 #[cfg(feature = "serde_bytes")]
 use self::serde_bytes::ByteBuf;
@@ -94,7 +96,7 @@ use std::collections::BTreeMap;
 use hashbrown::HashMap;
 
 #[cfg(feature = "hibitset")]
-use hibitset::{BitSet, BitSetLike};
+use hibitset::{BitSet};
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -832,7 +834,23 @@ where
 impl MallocSizeOf for BitSet
 {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        self.layer0().size_of(ops) +
-            self.layer1().size_of(ops) + self.layer2().size_of(ops) + self.layer3().size_of(ops)
+        self.layer0_as_slice().size_of(ops) +
+            self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
+    }
+}
+
+#[cfg(feature = "shred")]
+impl<T: MallocSizeOf> MallocSizeOf for shred::Fetch<T>
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.deref().size_of(ops)
+    }
+}
+
+#[cfg(feature = "shred")]
+impl<T: MallocSizeOf> MallocSizeOf for shred::FetchMut<T>
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.deref().size_of(ops)
     }
 }
