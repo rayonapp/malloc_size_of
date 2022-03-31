@@ -62,6 +62,8 @@ extern crate time;
 extern crate url;
 #[cfg(feature = "void")]
 extern crate void;
+#[cfg(feature = "hibitset")]
+extern crate hibitset;
 
 #[cfg(feature = "serde_bytes")]
 use self::serde_bytes::ByteBuf;
@@ -85,14 +87,14 @@ use winapi::um::heapapi::{GetProcessHeap, HeapSize, HeapValidate};
 #[cfg(feature = "void")]
 use self::void::Void;
 
-#[cfg(feature = "specs")]
-use specs::{DefaultVecStorage, VecStorage};
-#[cfg(feature = "specs")]
-use specs::{DenseVecStorage, FlaggedStorage};
+
 use std::collections::BTreeMap;
 
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap;
+
+#[cfg(feature = "hibitset")]
+use hibitset::{BitSet, BitSetLike};
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -823,5 +825,14 @@ where
             n += v.size_of(ops);
         }
         n
+    }
+}
+
+#[cfg(feature = "hibitset")]
+impl MallocSizeOf for BitSet
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.layer0().size_of(ops) +
+            self.layer1().size_of(ops) + self.layer2().size_of(ops) + self.layer3().size_of(ops)
     }
 }
