@@ -65,6 +65,8 @@ extern crate void;
 extern crate hibitset;
 #[cfg(feature = "specs")]
 extern crate specs;
+#[cfg(feature = "beach_map")]
+extern crate beach_map;
 
 
 use std::collections::BTreeMap;
@@ -99,7 +101,9 @@ use hibitset::{BitSet};
 
 #[cfg(feature = "specs")]
 use specs::Entity;
-use smallvec::SmallVec;
+
+#[cfg(feature = "beach_map")]
+use beach_map::BeachMap;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -857,6 +861,14 @@ impl MallocSizeOf for BitSet
 
 #[cfg(feature = "specs")]
 impl MallocSizeOf for Entity
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+}
+
+#[cfg(feature = "beach_map")]
+impl<K: MallocSizeOf, V: MallocSizeOf>  MallocSizeOf for BeachMap<K, V>
 {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         0
