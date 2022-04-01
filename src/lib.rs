@@ -99,6 +99,7 @@ use hibitset::{BitSet};
 
 #[cfg(feature = "specs")]
 use specs::Entity;
+use smallvec::SmallVec;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
