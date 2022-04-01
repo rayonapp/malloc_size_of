@@ -67,6 +67,8 @@ extern crate hibitset;
 extern crate specs;
 #[cfg(feature = "beach_map")]
 extern crate beach_map;
+#[cfg(feature = "lyon")]
+extern crate lyon;
 
 
 use std::collections::BTreeMap;
@@ -919,7 +921,13 @@ impl<K: MallocSizeOf>  MallocSizeOf for ID<K>
     }
 }
 
-
+#[cfg(feature = "lyon")]
+impl<T: MallocSizeOf>  MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T, u32>
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        self.vertices.size_of(ops) + self.indices.size_of(ops)
+    }
+}
 
 #[cfg(test)]
 mod tests {
