@@ -444,11 +444,7 @@ where
 
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        let heap = unsafe { ops.malloc_size_of(self.as_ptr()) };
-        if heap > 0 {
-            return heap;
-        }
-        let mut n = 0;
+        let mut n = unsafe { ops.malloc_size_of(self.as_ptr()) };
         for elem in self.iter() {
             n += elem.size_of(ops);
         }
@@ -1011,5 +1007,15 @@ mod tests {
         let angle = euclid::Angle::<f64>::radians(1.0);
         assert_eq!(angle.size_of(&mut ops), 0);
         assert_eq!(Box::new(angle).size_of(&mut ops), 8);
+    }
+
+    #[test]
+    fn test_rstar() {
+        let mut ops = MallocSizeOfOps::default();
+        let mut tree = rstar::RTree::new();
+        tree.insert([0.1, 0.0f32]);
+        tree.insert([0.2, 0.1]);
+        tree.insert([0.3, 0.0]);
+        assert_eq!(tree.size_of(&mut ops), 336);
     }
 }
