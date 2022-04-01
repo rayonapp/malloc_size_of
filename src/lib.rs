@@ -62,9 +62,6 @@ extern crate url;
 extern crate void;
 #[cfg(feature = "hibitset")]
 extern crate hibitset;
-#[cfg(feature = "shred")]
-extern crate shred;
-
 
 
 use std::collections::BTreeMap;
@@ -85,10 +82,8 @@ use winapi::ctypes::c_void;
 #[cfg(target_os = "windows")]
 use winapi::um::heapapi::{GetProcessHeap, HeapSize, HeapValidate};
 
-
 #[cfg(feature = "serde_bytes")]
 use self::serde_bytes::ByteBuf;
-
 
 #[cfg(feature = "void")]
 use self::void::Void;
@@ -837,21 +832,5 @@ impl MallocSizeOf for BitSet
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.layer0_as_slice().size_of(ops) +
             self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
-    }
-}
-
-#[cfg(feature = "shred")]
-impl<'a, T: MallocSizeOf> MallocSizeOf for shred::Fetch<'a, T>
-{
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        self.deref().size_of(ops)
-    }
-}
-
-#[cfg(feature = "shred")]
-impl<'a, T: MallocSizeOf> MallocSizeOf for shred::FetchMut<'a, T>
-{
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        self.deref().size_of(ops)
     }
 }

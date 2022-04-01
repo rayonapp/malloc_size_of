@@ -1,6 +1,6 @@
 [package]
 name = "malloc_size_of"
-version = "1.1.1"
+version = "1.1.2"
 authors = ["The Servo Project Developers", "Thomas Krause <thomaskrause@posteo.de>"]
 license = "MIT"
 description = "This is a fork of the `malloc_size_of` crate, which is part of the Servo codebase,"
@@ -10,7 +10,7 @@ readme = "README.md"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["euclid", "serde", "smallvec", "hashbrown", "hibitset", "shred"]
+default = ["euclid", "serde", "smallvec", "hashbrown", "hibitset"]
 
 
 [dependencies]
@@ -25,5 +25,4 @@ url = { version = "1.2", optional = true }
 void = { version = "1.0.2", optional = true }
 hashbrown = { version="0.11", optional = true }
 hibitset = { version = "0.6.3", optional = true }
-shred = { version = "0.12", optional = true }
 winapi = { version ="0.3.9", features=['heapapi']}
