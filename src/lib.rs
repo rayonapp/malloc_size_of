@@ -391,6 +391,10 @@ where
 
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        let heap = unsafe { ops.malloc_size_of(self.as_ptr()) };
+        if heap > 0 {
+            return heap;
+        }
         let mut n = 0;
         for elem in self.iter() {
             n += elem.size_of(ops);
@@ -850,6 +854,28 @@ mod tests {
         // data on the stack
         let boxed_slice: Box<[i32;3]> = Box::new([1,2,3]);
         let mut ops = MallocSizeOfOps::default();
-        assert_eq!(boxed_slice.shallow_size_of(&mut ops), 3*4);
+        assert_eq!(boxed_slice.size_of(&mut ops), 3*4);
+
+        let slice = &[1,2,3];
+        let mut ops = MallocSizeOfOps::default();
+        assert_eq!(slice.size_of(&mut ops), 0);
+    }
+
+    #[test]
+    fn test_bit_set() {
+        let mut bit_set = BitSet::new();
+        let mut ops = MallocSizeOfOps::default();
+        bit_set.add(1);
+        assert_eq!(bit_set.size_of(&mut ops), 96);
+    }
+
+    #[test]
+    fn test_large_bit_set() {
+        let mut bit_set = BitSet::new();
+        let mut ops = MallocSizeOfOps::default();
+        for i in 0..100_000 {
+            bit_set.add(i);
+        }
+        assert_eq!(bit_set.size_of(&mut ops), 16672);
     }
 }
