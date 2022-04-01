@@ -846,7 +846,8 @@ mod tests {
     #[test]
     fn test_boxed_slice() {
         // we must use the shallow size as the slice implementation
-        // does not distinguish between boxed sliced
+        // does not distinguish between boxed slices or slices referencing
+        // data on the stack
         let boxed_slice: Box<[i32;3]> = Box::new([1,2,3]);
         let mut ops = MallocSizeOfOps::default();
         assert_eq!(boxed_slice.shallow_size_of(&mut ops), 3*4);
