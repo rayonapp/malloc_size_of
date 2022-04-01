@@ -1,6 +1,6 @@
 [package]
 name = "malloc_size_of"
-version = "1.1.14"
+version = "1.1.15"
 authors = ["The Servo Project Developers", "Thomas Krause <thomaskrause@posteo.de>"]
 license = "MIT"
 description = "This is a fork of the `malloc_size_of` crate, which is part of the Servo codebase,"
@@ -11,7 +11,6 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["euclid", "serde", "smallvec", "hashbrown", "hibitset", "specs", "beach_map"]
-
 
 [dependencies]
 euclid =  { version = "0.22.6", optional = true}
