@@ -69,6 +69,8 @@ extern crate specs;
 extern crate beach_map;
 #[cfg(feature = "lyon")]
 extern crate lyon;
+#[cfg(feature = "rstar")]
+extern crate rstar;
 
 
 use std::collections::BTreeMap;
@@ -106,6 +108,9 @@ use specs::Entity;
 
 #[cfg(feature = "beach_map")]
 use beach_map::{BeachMap, ID};
+
+#[cfg(feature = "rstar")]
+use rstar::{RTreeObject, RTreeNode};
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -926,6 +931,33 @@ impl<T: MallocSizeOf>  MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T
 {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.vertices.size_of(ops) + self.indices.size_of(ops)
+    }
+}
+
+#[cfg(feature = "rstar")]
+impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::ParentNode<T>
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.children().size_of(ops)
+    }
+}
+
+#[cfg(feature = "rstar")]
+impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::RTreeNode<T>
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        match self {
+            RTreeNode::Leaf(child) => child.size_of(ops),
+            RTreeNode::Parent(children) => children.size_of(ops)
+        }
+    }
+}
+
+#[cfg(feature = "rstar")]
+impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::RTree<T>
+{
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.root().size_of(ops)
     }
 }
 
