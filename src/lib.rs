@@ -851,7 +851,7 @@ impl MallocSizeOf for BitSet
 impl MallocSizeOf for Entity
 {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
-        64
+        0
     }
 }
 
@@ -859,6 +859,7 @@ impl MallocSizeOf for Entity
 #[cfg(test)]
 mod tests {
     use super::*;
+    use smallvec::{smallvec, SmallVec};
 
     #[test]
     fn test_boxed_slice() {
@@ -890,5 +891,12 @@ mod tests {
             bit_set.add(i);
         }
         assert_eq!(bit_set.size_of(&mut ops), 16672);
+    }
+
+    #[test]
+    fn test_small_vec(){
+        let mut ops = MallocSizeOfOps::default();
+        let small_vec: Box<SmallVec<[u32;4]>> = Box::new(smallvec![1,2,3,4]);
+        assert_eq!(small_vec.size_of(&mut ops), 32);
     }
 }
