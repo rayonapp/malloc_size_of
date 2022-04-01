@@ -76,6 +76,7 @@ use std::os::raw::c_void;
 
 #[cfg(target_os = "windows")]
 extern crate winapi;
+extern crate specs;
 
 #[cfg(target_os = "windows")]
 use winapi::ctypes::c_void;
@@ -94,6 +95,7 @@ use hashbrown::HashMap;
 
 #[cfg(feature = "hibitset")]
 use hibitset::{BitSet};
+use specs::Entity;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -841,6 +843,15 @@ impl MallocSizeOf for BitSet
             self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
     }
 }
+
+#[cfg(feature = "specs")]
+impl MallocSizeOf for Entity
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        std::mem::size_of::<u32>() * 2
+    }
+}
+
 
 
 #[cfg(test)]
