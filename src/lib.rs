@@ -103,7 +103,7 @@ use hibitset::{BitSet};
 use specs::Entity;
 
 #[cfg(feature = "beach_map")]
-use beach_map::BeachMap;
+use beach_map::{BeachMap, ID};
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -874,6 +874,15 @@ impl<K: MallocSizeOf, V: MallocSizeOf>  MallocSizeOf for BeachMap<K, V>
         0
     }
 }
+
+#[cfg(feature = "beach_map")]
+impl<K: MallocSizeOf>  MallocSizeOf for ID<K>
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+}
+
 
 
 #[cfg(test)]
