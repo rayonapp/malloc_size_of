@@ -387,6 +387,7 @@ where
     }
 }
 
+/*
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         let mut n = 0;
@@ -396,6 +397,7 @@ impl<T: MallocSizeOf> MallocSizeOf for [T] {
         n
     }
 }
+*/
 
 #[cfg(feature = "serde_bytes")]
 impl MallocShallowSizeOf for ByteBuf {
