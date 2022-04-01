@@ -688,6 +688,13 @@ impl<T: MallocSizeOf, U> MallocSizeOf for euclid::Vector2D<T, U> {
     }
 }
 
+#[cfg(feature = "euclid")]
+impl<T: MallocSizeOf> MallocSizeOf for euclid::Angle<T> {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.radians.size_of(ops)
+    }
+}
+
 #[cfg(feature = "void")]
 impl MallocSizeOf for Void {
     #[inline]
@@ -899,5 +906,13 @@ mod tests {
         let mut ops = MallocSizeOfOps::default();
         let small_vec: Box<SmallVec<[u32;4]>> = Box::new(smallvec![1,2,3,4]);
         assert_eq!(small_vec.size_of(&mut ops), 32);
+    }
+
+    #[test]
+    fn test_euclid_angle() {
+        let mut ops = MallocSizeOfOps::default();
+        let angle = euclid::Angle::<f64>::radians(1.0);
+        assert_eq!(angle.size_of(&mut ops), 0);
+        assert_eq!(Box::new(angle).size_of(&mut ops), 8);
     }
 }
