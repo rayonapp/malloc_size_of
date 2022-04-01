@@ -63,6 +63,8 @@ extern crate url;
 extern crate void;
 #[cfg(feature = "hibitset")]
 extern crate hibitset;
+#[cfg(feature = "specs")]
+extern crate specs;
 
 
 use std::collections::BTreeMap;
@@ -94,6 +96,9 @@ use hashbrown::HashMap;
 
 #[cfg(feature = "hibitset")]
 use hibitset::{BitSet};
+
+#[cfg(feature = "specs")]
+use specs::Entity;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -839,6 +844,14 @@ impl MallocSizeOf for BitSet
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.layer0_as_slice().size_of(ops) +
             self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
+    }
+}
+
+#[cfg(feature = "specs")]
+impl MallocSizeOf for Entity
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        64
     }
 }
 
