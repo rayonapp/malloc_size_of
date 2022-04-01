@@ -39,6 +39,7 @@
 //!   fields in structs, because it makes it clear that the Box is being
 //!   measured as well as the thing it points to. E.g.
 //!   `<Box<_> as MallocSizeOf>::size_of(field, ops)`.
+//!
 
 #[cfg(feature = "euclid")]
 extern crate euclid;
@@ -387,7 +388,7 @@ where
     }
 }
 
-/*
+
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         let mut n = 0;
@@ -397,7 +398,7 @@ impl<T: MallocSizeOf> MallocSizeOf for [T] {
         n
     }
 }
-*/
+
 
 #[cfg(feature = "serde_bytes")]
 impl MallocShallowSizeOf for ByteBuf {
@@ -834,5 +835,20 @@ impl MallocSizeOf for BitSet
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.layer0_as_slice().size_of(ops) +
             self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_boxed_slice() {
+        // we must use the shallow size as the slice implementation
+        // does not distinguish between boxed sliced
+        let boxed_slice: Box<[i32;3]> = Box::new([1,2,3]);
+        let mut ops = MallocSizeOfOps::default();
+        assert_eq!(boxed_slice.shallow_size_of(&mut ops), 3*4);
     }
 }
