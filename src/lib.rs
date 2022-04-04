@@ -104,7 +104,7 @@ use hashbrown::HashMap;
 use hibitset::{BitSet};
 
 #[cfg(feature = "specs")]
-use specs::Entity;
+use specs::prelude::*;
 
 #[cfg(feature = "beach_map")]
 use beach_map::{BeachMap, ID};
@@ -905,6 +905,23 @@ impl MallocSizeOf for Entity
         0
     }
 }
+
+#[cfg(feature = "specs")]
+impl MallocSizeOf for ComponentEvent
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
+}
+
+#[cfg(feature = "specs")]
+impl<T: MallocSizeOf> MallocSizeOf for ReaderId<T>
+{
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        8
+    }
+}
+
 
 #[cfg(feature = "beach_map")]
 impl<K: MallocSizeOf, V: MallocSizeOf>  MallocSizeOf for BeachMap<K, V>
