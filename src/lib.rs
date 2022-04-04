@@ -41,10 +41,18 @@
 //!   `<Box<_> as MallocSizeOf>::size_of(field, ops)`.
 //!
 
+#[cfg(feature = "beach_map")]
+extern crate beach_map;
 #[cfg(feature = "euclid")]
 extern crate euclid;
 #[cfg(feature = "hashbrown")]
 extern crate hashbrown;
+#[cfg(feature = "hibitset")]
+extern crate hibitset;
+#[cfg(feature = "lyon")]
+extern crate lyon;
+#[cfg(feature = "rstar")]
+extern crate rstar;
 #[cfg(feature = "serde")]
 extern crate serde;
 #[cfg(feature = "serde_bytes")]
@@ -53,6 +61,8 @@ extern crate serde_bytes;
 extern crate smallbitvec;
 #[cfg(feature = "smallvec")]
 extern crate smallvec;
+#[cfg(feature = "specs")]
+extern crate specs;
 #[cfg(feature = "string_cache")]
 extern crate string_cache;
 #[cfg(feature = "time")]
@@ -61,17 +71,6 @@ extern crate time;
 extern crate url;
 #[cfg(feature = "void")]
 extern crate void;
-#[cfg(feature = "hibitset")]
-extern crate hibitset;
-#[cfg(feature = "specs")]
-extern crate specs;
-#[cfg(feature = "beach_map")]
-extern crate beach_map;
-#[cfg(feature = "lyon")]
-extern crate lyon;
-#[cfg(feature = "rstar")]
-extern crate rstar;
-
 
 use std::collections::BTreeMap;
 use std::hash::{BuildHasher, Hash};
@@ -101,7 +100,7 @@ use self::void::Void;
 use hashbrown::HashMap;
 
 #[cfg(feature = "hibitset")]
-use hibitset::{BitSet};
+use hibitset::BitSet;
 
 #[cfg(feature = "specs")]
 use specs::prelude::*;
@@ -110,7 +109,7 @@ use specs::prelude::*;
 use beach_map::{BeachMap, ID};
 
 #[cfg(feature = "rstar")]
-use rstar::{RTreeObject, RTreeNode};
+use rstar::{RTreeNode, RTreeObject};
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -133,7 +132,7 @@ pub unsafe fn heap_size_of<T>(ptr: *const T) -> usize {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
     // The C prototype is `je_malloc_usable_size(JEMALLOC_USABLE_SIZE_CONST void *ptr)`. On some
     // platforms `JEMALLOC_USABLE_SIZE_CONST` is `const` and on some it is empty. But in practice
@@ -141,17 +140,25 @@ unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
     // `*const c_void` here.
     extern "C" {
         #[cfg_attr(
-            any(
-                prefixed_jemalloc,
-                target_os = "macos",
-                target_os = "ios",
-                target_os = "android"
-            ),
+            any(prefixed_jemalloc, target_os = "ios", target_os = "android"),
             link_name = "je_malloc_usable_size"
         )]
         fn malloc_usable_size(ptr: *const c_void) -> usize;
     }
     malloc_usable_size(ptr)
+}
+
+// Requires jemalloc : on macos brew install jemalloc
+#[cfg(target_os = "macos")]
+unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
+    // The C prototype is `je_malloc_usable_size(JEMALLOC_USABLE_SIZE_CONST void *ptr)`. On some
+    // platforms `JEMALLOC_USABLE_SIZE_CONST` is `const` and on some it is empty. But in practice
+    // this function doesn't modify the contents of the block that `ptr` points to, so we use
+    // `*const c_void` here.
+    extern "C" {
+        fn malloc_size(ptr: *const c_void) -> usize;
+    }
+    malloc_size(ptr)
 }
 
 #[cfg(target_os = "windows")]
@@ -323,37 +330,37 @@ impl<T: MallocSizeOf + ?Sized> MallocSizeOf for Box<T> {
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;1] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 1] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;2] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 2] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;3] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 3] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;4] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 4] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;5] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 5] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
 }
 
-impl<T: MallocSizeOf> MallocSizeOf for [T;6] {
+impl<T: MallocSizeOf> MallocSizeOf for [T; 6] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self[0].size_of(ops) + self[1].size_of(ops)
     }
@@ -441,7 +448,6 @@ where
     }
 }
 
-
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         let mut n = unsafe { ops.malloc_size_of(self.as_ptr()) };
@@ -451,7 +457,6 @@ impl<T: MallocSizeOf> MallocSizeOf for [T] {
         n
     }
 }
-
 
 #[cfg(feature = "serde_bytes")]
 impl MallocShallowSizeOf for ByteBuf {
@@ -890,17 +895,16 @@ where
 }
 
 #[cfg(feature = "hibitset")]
-impl MallocSizeOf for BitSet
-{
+impl MallocSizeOf for BitSet {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        self.layer0_as_slice().size_of(ops) +
-            self.layer1_as_slice().size_of(ops) + self.layer2_as_slice().size_of(ops)
+        self.layer0_as_slice().size_of(ops)
+            + self.layer1_as_slice().size_of(ops)
+            + self.layer2_as_slice().size_of(ops)
     }
 }
 
 #[cfg(feature = "specs")]
-impl MallocSizeOf for Entity
-{
+impl MallocSizeOf for Entity {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         0
     }
@@ -924,51 +928,45 @@ impl<T: MallocSizeOf> MallocSizeOf for ReaderId<T>
 
 
 #[cfg(feature = "beach_map")]
-impl<K: MallocSizeOf, V: MallocSizeOf>  MallocSizeOf for BeachMap<K, V>
-{
+impl<K: MallocSizeOf, V: MallocSizeOf> MallocSizeOf for BeachMap<K, V> {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         0
     }
 }
 
 #[cfg(feature = "beach_map")]
-impl<K: MallocSizeOf>  MallocSizeOf for ID<K>
-{
+impl<K: MallocSizeOf> MallocSizeOf for ID<K> {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         0
     }
 }
 
 #[cfg(feature = "lyon")]
-impl<T: MallocSizeOf>  MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T, u32>
-{
+impl<T: MallocSizeOf> MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T, u32> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.vertices.size_of(ops) + self.indices.size_of(ops)
     }
 }
 
 #[cfg(feature = "rstar")]
-impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::ParentNode<T>
-{
+impl<T: MallocSizeOf + RTreeObject> MallocSizeOf for rstar::ParentNode<T> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.children().size_of(ops)
     }
 }
 
 #[cfg(feature = "rstar")]
-impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::RTreeNode<T>
-{
+impl<T: MallocSizeOf + RTreeObject> MallocSizeOf for rstar::RTreeNode<T> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         match self {
             RTreeNode::Leaf(child) => child.size_of(ops),
-            RTreeNode::Parent(children) => children.size_of(ops)
+            RTreeNode::Parent(children) => children.size_of(ops),
         }
     }
 }
 
 #[cfg(feature = "rstar")]
-impl<T: MallocSizeOf + RTreeObject>  MallocSizeOf for rstar::RTree<T>
-{
+impl<T: MallocSizeOf + RTreeObject> MallocSizeOf for rstar::RTree<T> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         self.root().size_of(ops)
     }
@@ -984,11 +982,14 @@ mod tests {
         // we must use the shallow size as the slice implementation
         // does not distinguish between boxed slices or slices referencing
         // data on the stack
-        let boxed_slice: Box<[i32;3]> = Box::new([1,2,3]);
+        let boxed_slice: Box<[i32; 3]> = Box::new([1, 2, 3]);
         let mut ops = MallocSizeOfOps::default();
-        assert_eq!(boxed_slice.size_of(&mut ops), 3*4);
+        #[cfg(target_os = "macos")]
+        assert_eq!(boxed_slice.size_of(&mut ops), 3 * 4 + 4);
+        #[cfg(target_os = "windows")]
+        assert_eq!(boxed_slice.size_of(&mut ops), 3 * 4);
 
-        let slice = &[1,2,3];
+        let slice = &[1, 2, 3];
         let mut ops = MallocSizeOfOps::default();
         assert_eq!(slice.size_of(&mut ops), 0);
     }
@@ -1012,9 +1013,9 @@ mod tests {
     }
 
     #[test]
-    fn test_small_vec(){
+    fn test_small_vec() {
         let mut ops = MallocSizeOfOps::default();
-        let small_vec: Box<SmallVec<[u32;4]>> = Box::new(smallvec![1,2,3,4]);
+        let small_vec: Box<SmallVec<[u32; 4]>> = Box::new(smallvec![1, 2, 3, 4]);
         assert_eq!(small_vec.size_of(&mut ops), 32);
     }
 
@@ -1023,7 +1024,10 @@ mod tests {
         let mut ops = MallocSizeOfOps::default();
         let angle = euclid::Angle::<f64>::radians(1.0);
         assert_eq!(angle.size_of(&mut ops), 0);
+        #[cfg(target_os = "windows")]
         assert_eq!(Box::new(angle).size_of(&mut ops), 8);
+        #[cfg(target_os = "macos")]
+        assert_eq!(Box::new(angle).size_of(&mut ops), 16);
     }
 
     #[test]
