@@ -71,6 +71,8 @@ extern crate time;
 extern crate url;
 #[cfg(feature = "void")]
 extern crate void;
+#[cfg(feature = "serde_json")]
+extern crate serde_json;
 
 use std::collections::BTreeMap;
 use std::hash::{BuildHasher, Hash};
@@ -111,6 +113,7 @@ use beach_map::{BeachMap, ID};
 
 #[cfg(feature = "rstar")]
 use rstar::{RTreeNode, RTreeObject};
+use serde_json::Value;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
 type VoidPtrToSizeFn = unsafe fn(ptr: *const c_void) -> usize;
@@ -973,6 +976,20 @@ impl<T: MallocSizeOf + RTreeObject> MallocSizeOf for rstar::RTree<T> {
     }
 }
 
+#[cfg(feature = "serde_json")]
+impl MallocSizeOf for serde_json::Value {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        match self {
+            Value::Null => 0,
+            Value::Bool(_) => 0,
+            Value::Number(_) => 0,
+            Value::String(s) => s.size_of(ops),
+            Value::Array(a) => a.size_of(ops),
+            Value::Object(o) => o.size_of(ops)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1039,5 +1056,12 @@ mod tests {
         tree.insert([0.2, 0.1]);
         tree.insert([0.3, 0.0]);
         assert_eq!(tree.size_of(&mut ops), 336);
+    }
+
+    #[test]
+    fn test_json_value() {
+        let mut ops = MallocSizeOfOps::default();
+        let v = serde_json::Value::from("hello");
+        assert_eq!(v.size_of(&mut ops), 5);
     }
 }
