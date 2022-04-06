@@ -349,7 +349,7 @@ impl<T: MallocSizeOf + ?Sized> MallocSizeOf for Box<T> {
 
 impl<T: MallocSizeOf> MallocSizeOf for [T; 1] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
-        self[0].size_of(ops) + self[1].size_of(ops)
+        self[0].size_of(ops)
     }
 }
 
