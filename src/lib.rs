@@ -164,7 +164,7 @@ unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
 }
 
 #[cfg(target_family = "wasm")]
-unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
+unsafe fn heap_size_of_impl(_ptr: *const c_void) -> usize {
    0
 }
 
@@ -312,9 +312,17 @@ pub trait MallocConditionalShallowSizeOf {
     fn conditional_shallow_size_of(&self, ops: &mut MallocSizeOfOps) -> usize;
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl MallocSizeOf for String {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         unsafe { ops.malloc_size_of(self.as_ptr()) }
+    }
+}
+
+#[cfg(target_family = "wasm")]
+impl MallocSizeOf for String {
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+       self.len() * 8
     }
 }
 
@@ -325,9 +333,17 @@ impl<'a, T: ?Sized> MallocSizeOf for &'a T {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl<T: ?Sized> MallocShallowSizeOf for Box<T> {
     fn shallow_size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         unsafe { ops.malloc_size_of(&**self) }
+    }
+}
+
+#[cfg(target_family = "wasm")]
+impl<T: ?Sized> MallocShallowSizeOf for Box<T> {
+    fn shallow_size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
     }
 }
 
@@ -455,9 +471,21 @@ where
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl<T: MallocSizeOf> MallocSizeOf for [T] {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         let mut n = unsafe { ops.malloc_size_of(self.as_ptr()) };
+        for elem in self.iter() {
+            n += elem.size_of(ops);
+        }
+        n
+    }
+}
+
+#[cfg(target_family = "wasm")]
+impl<T: MallocSizeOf> MallocSizeOf for [T] {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        let mut n = 0;
         for elem in self.iter() {
             n += elem.size_of(ops);
         }
@@ -483,9 +511,17 @@ impl MallocSizeOf for ByteBuf {
     }
 }
 
+#[cfg(not(target_family = "wasm"))]
 impl<T> MallocShallowSizeOf for Vec<T> {
     fn shallow_size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         unsafe { ops.malloc_size_of(self.as_ptr()) }
+    }
+}
+
+#[cfg(target_family = "wasm")]
+impl<T> MallocShallowSizeOf for Vec<T> {
+    fn shallow_size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        self.capacity() * std::mem::size_of::<T>()
     }
 }
 
@@ -526,11 +562,22 @@ impl<T: MallocSizeOf> MallocSizeOf for std::collections::VecDeque<T> {
     }
 }
 
-#[cfg(feature = "smallvec")]
+#[cfg(all(feature = "smallvec", not(target_family = "wasm")))]
 impl<A: smallvec::Array> MallocShallowSizeOf for smallvec::SmallVec<A> {
     fn shallow_size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         if self.spilled() {
             unsafe { ops.malloc_size_of(self.as_ptr()) }
+        } else {
+            0
+        }
+    }
+}
+
+#[cfg(all(feature = "smallvec", target_family = "wasm"))]
+impl<A: smallvec::Array> MallocShallowSizeOf for smallvec::SmallVec<A> {
+    fn shallow_size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        if self.spilled() {
+            size_of::<A>()
         } else {
             0
         }
