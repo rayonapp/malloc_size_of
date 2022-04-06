@@ -266,7 +266,7 @@ impl MallocSizeOfOps {
 pub trait MallocSizeOf {
     /// Measure the heap usage of all descendant heap-allocated structures, but
     /// not the space taken up by the value itself.
-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize;
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize { 0 }
 }
 
 /// Trait for measuring the "shallow" heap usage of a container.
