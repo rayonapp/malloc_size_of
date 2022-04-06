@@ -156,10 +156,7 @@ unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
 
 #[cfg(target_os = "macos")]
 unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
-    // The C prototype is `je_malloc_usable_size(JEMALLOC_USABLE_SIZE_CONST void *ptr)`. On some
-    // platforms `JEMALLOC_USABLE_SIZE_CONST` is `const` and on some it is empty. But in practice
-    // this function doesn't modify the contents of the block that `ptr` points to, so we use
-    // `*const c_void` here.
+    // On macos The C prototype is `malloc_size(MALLOC_SIZE_CONST void *ptr)`
     extern "C" {
         fn malloc_size(ptr: *const c_void) -> usize;
     }
@@ -168,14 +165,7 @@ unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
 
 #[cfg(target_family = "wasm")]
 unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
-    // The C prototype is `je_malloc_usable_size(JEMALLOC_USABLE_SIZE_CONST void *ptr)`. On some
-    // platforms `JEMALLOC_USABLE_SIZE_CONST` is `const` and on some it is empty. But in practice
-    // this function doesn't modify the contents of the block that `ptr` points to, so we use
-    // `*const c_void` here.
-    extern "C" {
-        fn dlmalloc_usable_size(ptr: *const c_void) -> usize;
-    }
-    dlmalloc_usable_size(ptr)
+   0
 }
 
 #[cfg(target_os = "windows")]
