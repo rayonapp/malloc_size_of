@@ -74,7 +74,7 @@ extern crate void;
 #[cfg(feature = "serde_json")]
 extern crate serde_json;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{BuildHasher, Hash};
 use std::mem::{align_of, size_of, MaybeUninit};
 use std::ops::Range;
@@ -903,6 +903,30 @@ impl<K, V> MallocShallowSizeOf for BTreeMap<K, V> {
     }
 }
 
+impl<V: MallocSizeOf> MallocSizeOf for BTreeSet<V> {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        // very raw estimation
+        let mut size = 0;
+        for v in self.iter() {
+            size += v.size_of(ops);
+        }
+        size
+    }
+}
+
+impl<V> MallocShallowSizeOf for BTreeSet<V> {
+    fn shallow_size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        // See the implementation for std::collections::HashSet for details.
+        if ops.has_malloc_enclosing_size_of() {
+            self.iter()
+                .next()
+                .map_or(0, |v| unsafe { ops.malloc_enclosing_size_of(v) })
+        } else {
+            self.iter().size_hint().0 * (size_of::<V>() + size_of::<usize>())
+        }
+    }
+}
+
 impl<K: MallocSizeOf, V: MallocSizeOf> MallocSizeOf for BTreeMap<K, V> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
         // very raw estimation
@@ -913,6 +937,7 @@ impl<K: MallocSizeOf, V: MallocSizeOf> MallocSizeOf for BTreeMap<K, V> {
         size
     }
 }
+
 
 #[cfg(feature = "hashbrown")]
 impl<K, V, S> MallocShallowSizeOf for HashMap<K, V, S>
