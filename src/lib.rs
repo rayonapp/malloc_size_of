@@ -57,6 +57,8 @@ extern crate rstar;
 extern crate serde;
 #[cfg(feature = "serde_bytes")]
 extern crate serde_bytes;
+#[cfg(feature = "serde_json")]
+extern crate serde_json;
 #[cfg(feature = "smallbitvec")]
 extern crate smallbitvec;
 #[cfg(feature = "smallvec")]
@@ -71,15 +73,13 @@ extern crate time;
 extern crate url;
 #[cfg(feature = "void")]
 extern crate void;
-#[cfg(feature = "serde_json")]
-extern crate serde_json;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{BuildHasher, Hash};
 use std::mem::{align_of, size_of, MaybeUninit};
+use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::ops::{Deref, DerefMut};
-use std::num::NonZeroUsize;
 
 #[cfg(not(target_os = "windows"))]
 use std::os::raw::c_void;
@@ -113,6 +113,8 @@ use beach_map::{BeachMap, ID};
 
 #[cfg(feature = "rstar")]
 use rstar::{RTreeNode, RTreeObject};
+
+#[cfg(feature = "serde_json")]
 use serde_json::Value;
 
 /// A C function that takes a pointer to a heap allocation and returns its size.
@@ -135,8 +137,6 @@ pub unsafe fn heap_size_of<T>(ptr: *const T) -> usize {
         heap_size_of_impl(ptr as *const c_void)
     }
 }
-
-
 
 #[cfg(not(any(target_os = "windows", target_os = "macos", target_family = "wasm")))]
 unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
@@ -165,7 +165,7 @@ unsafe fn heap_size_of_impl(ptr: *const c_void) -> usize {
 
 #[cfg(target_family = "wasm")]
 unsafe fn heap_size_of_impl(_ptr: *const c_void) -> usize {
-   0
+    0
 }
 
 #[cfg(target_os = "windows")]
@@ -269,7 +269,9 @@ impl MallocSizeOfOps {
 pub trait MallocSizeOf {
     /// Measure the heap usage of all descendant heap-allocated structures, but
     /// not the space taken up by the value itself.
-    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize { 0 }
+    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+        0
+    }
 }
 
 /// Trait for measuring the "shallow" heap usage of a container.
@@ -322,7 +324,7 @@ impl MallocSizeOf for String {
 #[cfg(target_family = "wasm")]
 impl MallocSizeOf for String {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
-       self.len() * 8
+        self.len() * 8
     }
 }
 
@@ -938,7 +940,6 @@ impl<K: MallocSizeOf, V: MallocSizeOf> MallocSizeOf for BTreeMap<K, V> {
     }
 }
 
-
 #[cfg(feature = "hashbrown")]
 impl<K, V, S> MallocShallowSizeOf for HashMap<K, V, S>
 where
@@ -990,21 +991,18 @@ impl MallocSizeOf for Entity {
 }
 
 #[cfg(feature = "specs")]
-impl MallocSizeOf for ComponentEvent
-{
+impl MallocSizeOf for ComponentEvent {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         0
     }
 }
 
 #[cfg(feature = "specs")]
-impl<T: MallocSizeOf> MallocSizeOf for ReaderId<T>
-{
+impl<T: MallocSizeOf> MallocSizeOf for ReaderId<T> {
     fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
         8
     }
 }
-
 
 #[cfg(feature = "beach_map")]
 impl<K: MallocSizeOf, V: MallocSizeOf> MallocSizeOf for BeachMap<K, V> {
@@ -1060,7 +1058,7 @@ impl MallocSizeOf for serde_json::Value {
             Value::Number(_) => 0,
             Value::String(s) => s.size_of(ops),
             Value::Array(a) => a.size_of(ops),
-            Value::Object(o) => o.size_of(ops)
+            Value::Object(o) => o.size_of(ops),
         }
     }
 }
