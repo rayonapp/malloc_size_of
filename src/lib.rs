@@ -1063,6 +1063,14 @@ impl MallocSizeOf for serde_json::Value {
     }
 }
 
+#[cfg(feature = "arrayvec")]
+impl<const T: usize> MallocSizeOf for arrayvec::ArrayString<T> {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+       T
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
