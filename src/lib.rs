@@ -1025,6 +1025,13 @@ impl<T: MallocSizeOf> MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T,
     }
 }
 
+#[cfg(feature = "lyon")]
+impl<T: MallocSizeOf> MallocSizeOf for lyon::lyon_tessellation::VertexBuffers<T, u16> {
+    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
+        self.vertices.size_of(ops) + self.indices.size_of(ops)
+    }
+}
+
 #[cfg(feature = "rstar")]
 impl<T: MallocSizeOf + RTreeObject> MallocSizeOf for rstar::ParentNode<T> {
     fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
